@@ -463,47 +463,6 @@ def logsInPeriod(request):
 
 
 @api_view(['POST'])
-def get_charges_in_time_range(request):
-    if request.method == 'POST':
-        data = request.data
-        print(data)
-        if ('mac_addr' in data) and ('pin' in data) and ('position' in data) and \
-            ('type_data' in data) and ('charge_start_time' in data) and \
-                ('charge_end_time' in data):
-            if data['mac_addr'] and data['pin'] and data['position'] and data['type_data'] \
-               and data['charge_start_time'] and data['charge_end_time']:
-                mac_addr = data.get('mac_addr')
-                pin = data.get('pin')
-                position = data.get('position')
-                type_data = data.get('type_data')
-                start_time = data.get('charge_start_time')
-                end_time = data.get('charge_end_time')
-                try:
-                    charges = ChargeCounts.objects.filter(Q(mac_addr=mac_addr, pin=pin, position=position,
-                                                          type_data=type_data,
-                                                          charge_start_time__range=(start_time, end_time),
-                                                          charge_end_time__range=(start_time, end_time)) |
-                                                          Q(mac_addr=mac_addr, pin=pin, position=position,
-                                                          type_data=type_data,
-                                                          charge_start_time__gt=start_time,
-                                                          charge_start_time__lt=end_time,
-                                                          charge_end_time__gte=end_time,
-                                                            ) |
-                                                          Q(mac_addr=mac_addr, pin=pin, position=position,
-                                                          type_data=type_data,
-                                                          charge_start_time__lt=start_time,
-                                                          charge_end_time__gt=start_time,
-                                                          charge_end_time__lt=end_time)).order_by('charge_start_time')
-                    serializer = ChargeCountsSerializers(charges, many=True)
-                    print(serializer)
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                except ChargeCounts.DoesNotExist:
-                    return Response({'msg': 'result not found', 'status_code': status.HTTP_404_NOT_FOUND})
-        return Response({'msg': 'no data received', 'status': status.HTTP_400_BAD_REQUEST})
-    return Response({'msg': 'no data received', 'status': status.HTTP_400_BAD_REQUEST})
-
-
-@api_view(['POST'])
 def get_charges_in_time_range_as_date_status(request):
     if request.method == 'POST':
         data = request.data
@@ -547,6 +506,7 @@ def get_charges_in_time_range_as_date_status(request):
                         return Response({'msg': 'invalid data', 'status': status.HTTP_400_BAD_REQUEST})
 
                     serializer = ChargeCountsSerializers(charges, many=True)
+                    print(serializer.data)
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 except ChargeCounts.DoesNotExist:
                     return Response({'msg': 'result not found', 'status_code': status.HTTP_404_NOT_FOUND})
