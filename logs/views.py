@@ -2,7 +2,7 @@ from django.db.models.fields import DateTimeField
 from django.shortcuts import render
 from rest_framework import serializers, viewsets
 from .serializers import *
-from .models import LogData, LiveData, LastOffline
+from .models import LogData, LiveData, LastOffline, ChargeCounts
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework import status, generics
@@ -326,19 +326,19 @@ def offline_data(request):
             if pin['tag'] == 1:
                 data['pin'] = pin['tag']
                 data['data'] = pin['modbus_data']
-                data['position'] = request.data[0]['Modbus'][9][ 'modbus_data']
-                # data['position'] = request.data[i]['Modbus'][9]['modbus_data']
+                data['position'] = request.data[0]['Modbus'][9][
+                    'modbus_data']  # data['position'] = request.data[i]['Modbus'][9]['modbus_data']
                 data['type_data'] = 2
                 diff = 0.0
                 data['diff_data'] = diff
                 data['updated_at'] = datetime.datetime.now()
-                # print("timeeeeeeeees", data['updated_at'], data['sendDataTime'])
+                #print("timeeeeeeeees", data['updated_at'], data['sendDataTime'])
                 """add script for data that use for report type of data """
                 try:
                     delete_null = Rotation.objects.filter(mac_addr=data['mac_addr']).filter(pin=data['pin']).filter(
                         position=data['position']).filter(type_data_id=data['type_data']).order_by("sendDataTime").last()
                     if delete_null.flag_on is None:
-                        # print(delete_null.sendDataTime)
+                        #print(delete_null.sendDataTime)
                         if datetime.timedelta(minutes=float(20)) >= data['sendDataTime'].replace(tzinfo=utc) - delete_null.sendDataTime.replace(tzinfo=utc) > datetime.timedelta(minutes=float(1)):
                             Rotation.objects.filter(mac_addr=data['mac_addr']).filter(pin=data['pin']).filter(
                                 position=data['position']).filter(type_data_id=data['type_data']).order_by("sendDataTime").last().delete()
@@ -462,6 +462,7 @@ def logsInPeriod(request):
             return Response({"no time specified"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 @api_view(['POST'])
 def get_charges_in_time_range_as_date_status(request):
     if request.method == 'POST':
@@ -478,7 +479,7 @@ def get_charges_in_time_range_as_date_status(request):
                 type_data = data.get('type_data')
                 start_time = data.get('charge_start_time')
                 end_time = data.get('charge_end_time')
-                complete_status = data.get('complete_status')
+                complete_status = int(data.get('complete_status'))
                 try:
                     charges = ChargeCounts.objects.filter(Q(mac_addr=mac_addr, pin=pin, position=position,
                                                             type_data=type_data,
@@ -496,17 +497,16 @@ def get_charges_in_time_range_as_date_status(request):
                                                             charge_end_time__gt=start_time,
                                                             charge_end_time__lt=end_time)).order_by('charge_start_time')
 
-                    if complete_status == '2':
+                    if complete_status == 2:
                         charges = charges
-                    elif complete_status == '1':
+                    elif complete_status == 0:
                         charges = charges.filter(complete_status=False)
-                    elif complete_status == '0':
+                    elif complete_status == 1:
                         charges = charges.filter(complete_status=True)
                     else:
                         return Response({'msg': 'invalid data', 'status': status.HTTP_400_BAD_REQUEST})
 
                     serializer = ChargeCountsSerializers(charges, many=True)
-                    print(serializer.data)
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 except ChargeCounts.DoesNotExist:
                     return Response({'msg': 'result not found', 'status_code': status.HTTP_404_NOT_FOUND})
