@@ -11,8 +11,8 @@ urlpatterns = [
     path('gateway/', include(router.urls)),
     path('gateway/api/add_data/', add_data),
     path('gateway/api/getLogs/inPeriod/', logsInPeriodAggre),
-    # path('gateway/api/getLogs/chargecounts/get_charges_by_date_and_status/', get_charges_by_date_and_status),
+    path('gateway/api/getLogs/inPeriod/data/', logsInPeriodData),
     path('gateway/api/add_data/offline/', offline_data),
     path('gateway/api/add_data/test/', test),
-    path('gateway/get_charges_as_date_and_status/', get_charges_in_time_range_as_date_status)
+    path('gateway/api/getLogs/chargecounts/get_charges/', get_charges_in_time_range_as_date_status)
 ]
